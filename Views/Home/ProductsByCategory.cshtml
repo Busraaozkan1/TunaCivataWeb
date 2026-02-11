@@ -1,0 +1,87 @@
+@model IEnumerable<TunaCivataWeb.Models.Product>
+
+@{
+    Layout = "_Layout"; // Sitenin genel tasarımıyla uyumlu olması için
+    ViewData["Title"] = ViewData["CategoryName"];
+}
+
+<div class="container-fluid py-5" style="background: linear-gradient(135deg, #004d40 0%, #00251a 100%); margin-top: 80px;">
+    <div class="container text-center text-white py-4">
+        <h1 class="display-5 fw-bold text-uppercase">@ViewData["CategoryName"]</h1>
+        <p class="opacity-75">Tuna Cıvata & Bağlantı Elemanları Güvencesiyle</p>
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row g-4">
+        @if (Model == null || !Model.Any())
+        {
+            <div class="col-12 text-center py-5">
+                <div class="card border-0 shadow-sm p-5" style="border-radius: 20px;">
+                    <i class="fas fa-box-open fa-4x mb-3 text-muted"></i>
+                    <h4 class="text-dark fw-bold">Henüz Ürün Eklenmemiş</h4>
+                    <p class="text-muted">Bu kategorideki ürünlerimiz yakında burada sergilenecektir.</p>
+                    <div class="mt-4">
+                        <a href="/" class="btn btn-outline-success rounded-pill px-4">Ana Sayfaya Dön</a>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            @foreach (var item in Model)
+            {
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="card h-100 shadow-sm border-0 product-card">
+                        <div class="product-img-wrapper p-3">
+                            <img src="@item.ImageUrl" class="img-fluid" 
+                                 onerror="this.src='/img/no-image.jpg'" 
+                                 alt="@item.Name">
+                        </div>
+                        <div class="card-body text-center bg-white border-top">
+                            <h6 class="fw-bold text-dark mb-1">@item.Name</h6>
+                            <p class="text-muted small mb-3" style="font-size: 0.8rem; height: 40px; overflow: hidden;">
+                                @item.Description
+                            </p>
+                            <a href="https://wa.me/90532XXXXXXX?text=@item.Name hakkında bilgi almak istiyorum." 
+                               target="_blank" class="btn btn-sm btn-success w-100 rounded-pill">
+                                <i class="fab fa-whatsapp me-1"></i>Teklif Al
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+<style>
+    .product-card {
+        border-radius: 20px;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .product-card:hover {
+        transform: translateY(-12px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+    }
+
+    .product-img-wrapper {
+        height: 220px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff;
+    }
+
+    .product-img-wrapper img {
+        max-height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+    }
+
+    /* WhatsApp Butonu için renk ayarı */
+    .btn-success { background-color: #25d366; border-color: #25d366; }
+    .btn-success:hover { background-color: #128c7e; border-color: #128c7e; }
+</style>

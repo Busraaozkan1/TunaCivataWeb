@@ -1,0 +1,113 @@
+:root {
+    --admin-primary: #004d40;
+    --admin-secondary: #26a69a;
+    --admin-bg: #f4f7f6;
+    --sidebar-width: 260px;
+}
+
+body {
+    background-color: var(--admin-bg);
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+}
+
+/* Sidebar */
+.sidebar {
+    width: var(--sidebar-width);
+    height: 100vh;
+    background: linear-gradient(180deg, #00251a 0%, var(--admin-primary) 100%);
+    position: fixed;
+    left: 0;
+    top: 0;
+    color: white;
+    padding: 20px;
+    z-index: 1000;
+}
+
+.main-content {
+    margin-left: var(--sidebar-width);
+    padding: 30px;
+    min-height: 100vh;
+}
+
+/* Modern Kartlar ve Sekmeler */
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}
+
+.nav-pills .nav-link {
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 10px;
+    border-radius: 10px;
+    transition: 0.3s;
+}
+
+.nav-pills .nav-link.active {
+    background-color: var(--admin-secondary) !important;
+    color: white;
+}
+
+.tab-pane {
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Dosya Yükleme Alanı */
+.upload-area {
+    border: 2px dashed #ddd;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    background: #fdfdfd;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.upload-area:hover {
+    border-color: var(--admin-secondary);
+    background: #f0fdfa;
+}
+
+.btn-save {
+    background: var(--admin-secondary);
+    color: white;
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 12px;
+    border: none;
+}
+
+.btn-save:hover {
+    background: var(--admin-primary);
+    color: white;
+}
+
+.badge-cat {
+    background-color: rgba(38, 166, 154, 0.1);
+    color: var(--admin-secondary);
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+i.fas, i.far, i.fab {
+    width: 1.2em !important;
+    text-align: center;
+}

@@ -1,0 +1,399 @@
+@model IEnumerable<TunaCivataWeb.Models.Product>
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tuna Cıvata | VIP Kontrol Paneli</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/admin.css"> </head>
+<body>
+
+    <div class="sidebar shadow">
+        <div class="text-center mb-4 pb-3 border-bottom border-secondary">
+            <img src="/img/tuna_logo1.png" width="130" class="bg-white p-2 rounded shadow-sm">
+            <h6 class="mt-3 text-uppercase small fw-bold tracking-wider text-white">Yönetim Merkezi</h6>
+        </div>
+
+        <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist">
+            <button class="nav-link active text-start" data-bs-toggle="pill" data-bs-target="#tab-products" type="button">
+                <i class="fas fa-boxes me-2"></i> Ürün Yönetimi
+            </button>
+            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-categories" type="button">
+                <i class="fas fa-tags me-2"></i> Kategori Yönetimi
+            </button>
+            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-messages" type="button">
+                <i class="fas fa-envelope me-2"></i> Gelen Mesajlar
+            </button>
+            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-security" type="button">
+                <i class="fas fa-user-shield me-2"></i> Güvenlik Ayarları
+            </button>
+            <hr class="text-secondary">
+            <a href="/" class="nav-link text-start text-white text-decoration-none">
+                <i class="fas fa-external-link-alt me-2"></i> Siteye Dön
+            </a>
+            <a href="/Admin/Logout" class="nav-link text-start text-danger fw-bold text-decoration-none">
+                <i class="fas fa-sign-out-alt me-2"></i> Güvenli Çıkış
+            </a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="tab-content" id="v-pills-tabContent">
+
+            <div class="tab-pane fade show active" id="tab-products">
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h3 class="fw-bold text-dark">Ürün Envanteri</h3>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xl-4 col-lg-5 mb-4">
+                        <div class="card p-4 shadow-sm">
+                            <h5 id="formTitle" class="fw-bold mb-3">
+                                <i class="fas fa-plus-circle text-success me-2"></i>Yeni Ürün
+                            </h5>
+
+                            <form id="productForm" asp-controller="Admin" asp-action="AddProduct" method="post" enctype="multipart/form-data">
+                                <input type="hidden" name="Id" id="productId" value="0">
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold">ÜRÜN ADI</label>
+                                    <input type="text" name="Name" id="productName" class="form-control shadow-sm" placeholder="Örn: M8 Çelik Vida" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold">ÜRÜN TÜRÜ (KATEGORİ)</label>
+                                    <select name="Category" id="productCategory" class="form-select shadow-sm" required>
+                                        <option value="">Seçiniz...</option>
+                                        @if (ViewBag.Categories != null)
+                                        {
+                                            foreach (var cat in ViewBag.Categories)
+                                            {
+                                                <option value="@cat.Name">@cat.Name</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold d-block text-start">ÜRÜN RESMİ (PC'den Seç)</label>
+                                    <label for="fileUpload" class="upload-area w-100">
+                                        <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+                                        <p id="fileNameDisplay" class="small text-muted mb-0">Tıklayın veya dosya seçin</p>
+                                        <input type="file" name="ImageFile" id="fileUpload" class="d-none" accept="image/*">
+                                    </label>
+                                    <div id="editImagePreview" class="mt-2 d-none text-center">
+                                        <small class="text-muted d-block mb-1">Mevcut Resim:</small>
+                                        <img id="currentImage" src="" style="height: 60px; border-radius: 5px;">
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold">AÇIKLAMA</label>
+                                    <textarea name="Description" id="productDescription" class="form-control shadow-sm" rows="3" placeholder="Teknik detaylar..."></textarea>
+                                </div>
+
+                                <button type="submit" id="submitBtn" class="btn btn-save w-100 shadow">ÜRÜNÜ SİSTEME EKLE</button>
+                                <button type="button" id="cancelEditBtn" class="btn btn-light w-100 mt-2 d-none" onclick="resetForm()">Vazgeç</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-8 col-lg-7 mb-4">
+                        <div class="card p-0 overflow-hidden shadow-sm">
+                            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-dark"><i class="fas fa-list text-primary me-2"></i>Kayıtlı Ürünler</span>
+                                <span class="badge bg-dark rounded-pill">@Model.Count() Adet</span>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="ps-4">Görsel</th>
+                                            <th>Ürün Bilgisi</th>
+                                            <th>Kategori</th>
+                                            <th class="text-center">İşlem</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (!Model.Any())
+                                        {
+                                            <tr>
+                                                <td colspan="4" class="text-center py-4 text-muted">Henüz ürün eklenmemiş.</td>
+                                            </tr>
+                                        }
+                                        else
+                                        {
+                                            foreach (var item in Model)
+                                            {
+                                                <tr>
+                                                    <td class="ps-4">
+                                                        <img src="@item.ImageUrl" style="width:50px; height:50px; object-fit:cover; border-radius:8px;" onerror="this.src='/img/no-image.jpg'">
+                                                    </td>
+                                                    <td>
+                                                        <div class="fw-bold text-dark">@item.Name</div>
+                                                        <div class="small text-muted text-truncate" style="max-width: 200px;">@item.Description</div>
+                                                    </td>
+                                                    <td><span class="badge-cat">@item.Category</span></td>
+                                                    <td class="text-center">
+                                                        <button class="btn btn-sm btn-outline-primary border-0 rounded-circle me-1"
+                                                                onclick="prepareEdit('@item.Id', '@item.Name', '@item.Category', '@item.Description', '@item.ImageUrl')">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <a asp-action="DeleteProduct" asp-route-id="@item.Id"
+                                                           class="btn btn-sm btn-outline-danger border-0 rounded-circle"
+                                                           onclick="return confirm('Bu ürünü silmek istediğinize emin misiniz?')">
+                                                            <i class="fas fa-trash"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="tab-categories">
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h3 class="fw-bold text-dark">Kategori Yönetimi</h3>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xl-4 col-lg-5 mb-4">
+                        <div class="card p-4 shadow-sm border-0">
+                            <h5 class="fw-bold mb-4 text-dark" id="categoryFormTitle">
+                                <i class="fas fa-plus text-warning me-2"></i>Yeni Kategori Ekle
+                            </h5>
+                            
+                            <form id="categoryForm" asp-action="AddCategory" method="post" enctype="multipart/form-data">
+                                <input type="hidden" name="id" id="categoryId" value="0">
+                                
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold">KATEGORİ ADI</label>
+                                    <input type="text" name="categoryName" id="categoryInput" class="form-control p-3 shadow-sm" placeholder="Örn: Paslanmaz Vidalar" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold">KATEGORİ GÖRSELİ</label>
+                                    <input type="file" name="imageFile" id="categoryImageInput" class="form-control p-2 shadow-sm" accept="image/*">
+                                    <div class="form-text text-muted small mt-1">Görsel seçimi opsiyoneldir.</div>
+                                </div>
+
+                                <button id="categorySubmitBtn" class="btn btn-dark w-100 p-3 fw-bold shadow-sm" type="submit">KATEGORİYİ EKLE</button>
+                                <button type="button" id="cancelCategoryEditBtn" class="btn btn-light w-100 mt-2 d-none" onclick="resetCategoryForm()">Vazgeç</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-8 col-lg-7 mb-4">
+                        <div class="card p-4 shadow-sm border-0">
+                            <h5 class="fw-bold mb-4 text-dark"><i class="fas fa-tags text-primary me-2"></i>Aktif Kategoriler</h5>
+                            <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                                <table class="table table-hover align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Kategori Adı</th>
+                                            <th class="text-end">İşlemler</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (ViewBag.Categories != null)
+                                        {
+                                            foreach (var cat in ViewBag.Categories)
+                                            {
+                                                <tr>
+                                                    <td class="fw-bold text-secondary">@cat.Name</td>
+                                                    <td class="text-end">
+                                                        <button class="btn btn-sm btn-outline-primary border-0 rounded-circle me-1" 
+                                                                onclick="prepareCategoryEdit('@cat.Id', '@cat.Name')" title="Düzenle">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <a href="/Admin/DeleteCategory/@cat.Id" class="btn btn-sm btn-outline-danger border-0 rounded-circle" 
+                                                           onclick="return confirm('Bu kategoriyi silmek istediğinize emin misiniz?')" title="Sil">
+                                                            <i class="fas fa-trash"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <tr><td colspan="2" class="text-center text-muted py-4">Kategori bulunamadı.</td></tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="tab-messages">
+                <div class="card p-4 shadow-sm">
+                    <h5 class="fw-bold mb-4 text-dark"><i class="fas fa-envelope-open-text text-info me-2"></i>Müşteri Mesajları</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Tarih</th>
+                                    <th>Müşteri</th>
+                                    <th>Konu</th>
+                                    <th>Mesaj</th>
+                                    <th class="text-center">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (ViewBag.Messages != null)
+                                {
+                                    foreach (var msg in ViewBag.Messages)
+                                    {
+                                        <tr>
+                                            <td class="small">@msg.CreatedDate.ToString("dd.MM.yyyy HH:mm")</td>
+                                            <td><strong>@msg.Name</strong><br><small class="text-muted">@msg.Email</small></td>
+                                            <td><span class="badge bg-secondary">@msg.Subject</span></td>
+                                            <td><p class="small mb-0" style="max-width: 400px; white-space: pre-wrap;">@msg.Message</p></td>
+                                            <td class="text-center">
+                                                <a href="/Admin/DeleteMessage/@msg.Id" 
+                                                   class="btn btn-sm btn-outline-danger border-0 rounded-circle"
+                                                   onclick="return confirm('Bu mesajı silmek istediğinize emin misiniz?')" 
+                                                   title="Mesajı Sil">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="tab-security">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card p-4 shadow-sm">
+                            <h5 class="fw-bold mb-4 text-dark"><i class="fas fa-shield-alt text-danger me-2"></i>Admin Giriş Bilgilerini Güncelle</h5>
+                            <form asp-action="UpdateSecurity" method="post">
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold">YENİ E-POSTA</label>
+                                    <input type="email" name="newEmail" class="form-control p-3 shadow-sm" placeholder="info@tunacivata.com" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold">YENİ ŞİFRE</label>
+                                    <input type="password" name="newPassword" class="form-control p-3 shadow-sm" placeholder="********" required>
+                                </div>
+                                <button class="btn btn-danger w-100 p-3 fw-bold" type="submit">GÜVENLİK BİLGİLERİNİ GÜNCELLE</button>
+                            </form>
+                            <div class="mt-3 small text-muted">
+                                <i class="fas fa-info-circle me-1"></i> Şifre değişiminden sonra sistem yeni bilgilerle giriş yapmanızı isteyebilir.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div> 
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // 1. ÜRÜN YÖNETİMİ FONKSİYONLARI
+        document.getElementById('fileUpload').onchange = function () {
+            if (this.files.length > 0) {
+                let fileName = this.files[0].name;
+                document.getElementById('fileNameDisplay').innerText = "Seçilen: " + fileName;
+                this.parentElement.style.borderColor = "#26a69a";
+                this.parentElement.style.background = "#f0fdfa";
+            }
+        };
+
+        function prepareEdit(id, name, category, description, imageUrl) {
+            const form = document.getElementById('productForm');
+            form.action = "/Admin/EditProduct";
+
+            document.getElementById('formTitle').innerHTML = '<i class="fas fa-edit text-warning me-2"></i>Ürünü Düzenle';
+            document.getElementById('productId').value = id;
+            document.getElementById('productName').value = name;
+            document.getElementById('productCategory').value = category;
+            document.getElementById('productDescription').value = description;
+
+            document.getElementById('editImagePreview').classList.remove('d-none');
+            document.getElementById('currentImage').src = imageUrl;
+
+            document.getElementById('submitBtn').innerText = "DEĞİŞİKLİKLERİ KAYDET";
+            document.getElementById('submitBtn').classList.replace('btn-save', 'btn-warning');
+            document.getElementById('cancelEditBtn').classList.remove('d-none');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetForm() {
+            const form = document.getElementById('productForm');
+            form.action = "/Admin/AddProduct";
+            form.reset();
+
+            document.getElementById('formTitle').innerHTML = '<i class="fas fa-plus-circle text-success me-2"></i>Yeni Ürün';
+            document.getElementById('productId').value = "0";
+            document.getElementById('editImagePreview').classList.add('d-none');
+            document.getElementById('fileNameDisplay').innerText = "Tıklayın veya dosya seçin";
+
+            document.getElementById('submitBtn').innerText = "ÜRÜNÜ SİSTEME EKLE";
+            document.getElementById('submitBtn').classList.replace('btn-warning', 'btn-save');
+            document.getElementById('cancelEditBtn').classList.add('d-none');
+        }
+
+        // 2. KATEGORİ YÖNETİMİ FONKSİYONLARI
+        function prepareCategoryEdit(id, name) {
+            const form = document.getElementById('categoryForm');
+            form.action = "/Admin/EditCategory"; 
+
+            document.getElementById('categoryFormTitle').innerHTML = '<i class="fas fa-edit text-primary me-2"></i>Kategoriyi Düzenle';
+            document.getElementById('categoryId').value = id;
+            document.getElementById('categoryInput').value = name;
+            document.getElementById('categoryInput').name = "newName";
+
+            const fileInput = document.getElementById('categoryImageInput');
+            if(fileInput) fileInput.value = "";
+
+            const submitBtn = document.getElementById('categorySubmitBtn');
+            submitBtn.innerText = "DEĞİŞİKLİKLERİ KAYDET";
+            submitBtn.classList.remove('btn-dark');
+            submitBtn.classList.add('btn-primary');
+            
+            document.getElementById('cancelCategoryEditBtn').classList.remove('d-none');
+            form.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function resetCategoryForm() {
+            const form = document.getElementById('categoryForm');
+            form.action = "/Admin/AddCategory";
+            form.reset();
+
+            document.getElementById('categoryFormTitle').innerHTML = '<i class="fas fa-plus text-warning me-2"></i>Yeni Kategori Ekle';
+            document.getElementById('categoryId').value = "0";
+            document.getElementById('categoryInput').name = "categoryName"; 
+
+            const submitBtn = document.getElementById('categorySubmitBtn');
+            submitBtn.innerText = "KATEGORİYİ EKLE";
+            submitBtn.classList.remove('btn-primary');
+            submitBtn.classList.add('btn-dark');
+
+            document.getElementById('cancelCategoryEditBtn').classList.add('d-none');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,162 @@
+﻿@{
+    ViewData["Title"] = "Anasayfa";
+}
+
+<header id="hero">
+    <div class="hero-content">
+        <img src="/img/tuna_logo1.png" alt="TUNA CİVATA Ana Logo" class="hero-logo">
+    </div>
+</header>
+
+<section id="about" class="section-padding">
+    <div class="container">
+        <h3 class="section-title">Hakkımızda</h3>
+        <div class="about-content">
+            <div class="text-block">
+                <p>Tuna Cıvata, 30 yılı aşkın tecrübesiyle cıvata, vida, somun, pul başta olmak üzere her türlü bağlantı
+                    elemanları ile endüstriyel hırdavat ürünlerinin satış ve tedarikini yapmaktadır.</p>
+                    <p>Projelerinize özel CNC torna ve dik işleme merkezlerimizde teknik resme dayalı üretim yaparak,
+                        uluslararası sertifikalı kalite güvencesi sunuyoruz.</p>
+                    </div>
+                    <div class="stats-block">
+                        <h4>Kısaca Biz</h4>
+                        <ul>
+                            <li><i class="fas fa-industry"></i> 🌟 Yenilikçi Tam Odak</li>
+                            <li><i class="fas fa-users"></i> 🤝 %100 Memnuniyet</li>
+                            <li><i class="fas fa-check-circle"></i> 💡 Sürekli Gelişim</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="sectors" class="section-padding bg-light">
+            <div class="container">
+                <h3 class="section-title">Sektörlerimiz</h3>
+                <p class="section-subtitle">Geniş çözüm yelpazemiz ile projelerinize değer katıyoruz.</p>
+
+                <div class="category-grid">
+                    <div class="category-card">
+                        <i class="fas fa-solar-panel fa-3x icon-green"></i>
+                        <h4>Güneş Enerji Sistemleri</h4>
+                        <p>Yüksek mukavemetli konstrüksiyon bağlantıları ve özel kaplamalı ürünler.</p>
+                    </div>
+                    <div class="category-card">
+                        <i class="fas fa-city fa-3x icon-green"></i>
+                        <h4>İnşaat / Yapı</h4>
+                        <p>Çelik yapılar, köprüler ve alt yapı projeleri için güvenilir çözümler.</p>
+                    </div>
+                    <div class="category-card">
+                        <i class="fas fa-tractor fa-3x icon-green"></i>
+                        <h4>Tarım</h4>
+                        <p>Tarım makineleri ve ekipmanları için aşınmaya dayanıklı parçalar.</p>
+                    </div>
+                    <div class="category-card">
+                        <i class="fas fa-hard-hat fa-3x icon-green"></i>
+                        <h4>Makine ve Madencilik</h4>
+                        <p>Ağır sanayi şartlarına uygun, yüksek kaliteli ve sertifikalı ürünler.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="products" class="section-padding bg-light">
+            <div class="container">
+                <div class="text-center mb-5">
+                    <h3 class="section-title">Ürünlerimiz</h3>
+                    <p class="section-subtitle">
+                        Geniş ürün parkurumuzla her ihtiyaca uygun profesyonel çözümler sunuyoruz.
+                    </p>
+                </div>
+
+                @* Ürün az olsa bile devleşmemesi için bu grid yapısını kullanıyoruz *@
+                <div class="product-grid">
+                    @if (ViewBag.Categories != null)
+                    {
+                        foreach (var item in ViewBag.Categories)
+                        {
+                            <a asp-controller="Home" asp-action="ProductsByCategory" asp-route-categoryName="@item.Name"
+                                   class="premium-product-card text-decoration-none">
+
+                                <div class="product-visual-box">
+                                    <div class="visual-overlay"></div>
+                                    <div class="spotlight"></div>
+
+                                    @if (!string.IsNullOrEmpty(item.ImagePath))
+                                    {
+                                        <img src="@item.ImagePath" alt="@item.Name" class="product-img">
+                                    }
+                                    else
+                                    {
+                                        <div class="fallback-icon text-center">
+                                            <i class="fas fa-box fa-3x mb-2" style="color: var(--primary-color); opacity: 0.3;"></i>
+                                            <span class="d-block small text-muted">Görsel Yakında</span>
+                                        </div>
+                                    }
+                                </div>
+
+                                <div class="product-name-banner">
+                                    <h4 style="color: #ffffff !important;">@item.Name</h4>
+                                    <div class="view-detail-text">
+                                        <span>Ürünleri Gör</span>
+                                        <i class="fas fa-arrow-right"></i>
+                                    </div>
+                                </div>
+                            </a>
+                        }
+                    }
+                </div>
+            </div>
+        </section>
+
+
+        <section id="contact" class="section-padding bg-light">
+            <div class="container">
+                <h3 class="section-title">Bize Ulaşın</h3>
+                <div class="contact-grid">
+                    <div class="contact-form">
+                        <h4>Hızlı İletişim Formu</h4>
+
+                        @* Mesaj gönderildiğinde başarı uyarısı gösterir *@
+                        @if (TempData["SuccessMessage"] != null)
+                        {
+                            <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+                        }
+
+                        <form asp-controller="Home" asp-action="SendMessage" method="POST">
+                            <input type="text" name="Name" placeholder="Adınız Soyadınız" required>
+                            <input type="email" name="Email" placeholder="Kurumsal E-posta Adresiniz" required>
+                            <input type="text" name="Subject" placeholder="Konu (Opsiyonel)">
+                            <textarea name="Message" placeholder="Mesajınız ve Talep Detayları" rows="5" required></textarea>
+                            <button type="submit" class="btn btn-primary">GÖNDER</button>
+                        </form>
+                    </div>
+                    <div class="contact-info">
+                        <h4>İletişim Bilgileri</h4>
+                        <ul>
+                            @* İkon boyutları 24px olarak sabitlendi *@
+                            <li><i class="fas fa-map-marker-alt icon-green" style="font-size: 18px;"></i> Tekke mah. 3733 sk.
+                                No:23A Tarsus/Mersin</li>
+                                <li><i class="fas fa-phone icon-green" style="font-size: 18px;"></i> 0324 613 11 19</li>
+                                <li>
+                                    <a href="https://wa.me/905327040095" target="_blank" class="contact-link">
+                                        <i class="fab fa-whatsapp icon-green" style="font-size: 18px;"></i> 0532 704 00 95
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="mailto:info@tunacivata.com" class="contact-link">
+                                        <i class="fas fa-envelope icon-green" style="font-size: 18px;"></i> info@tunacivata.com
+                                    </a>
+                                </li>
+                            </ul>
+                            <div class="map-placeholder">
+                                <iframe
+                                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3198.807493630654!2d34.887250611843385!3d36.94270147209192!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x15286377823f663b%3A0xe546942468725838!2sTekke%2C%203733.%20Sk.%20No%3A23%20A%2C%2033400%20Tarsus%2FMersin!5e0!3m2!1str!2str!4v1716380000000!5m2!1str!2str"
+                                    width="100%" height="350" style="border:0;" allowfullscreen="" loading="lazy"
+                                    referrerpolicy="no-referrer-when-downgrade">
+                                </iframe>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>

@@ -1,0 +1,295 @@
+using Microsoft.AspNetCore.Mvc;
+using TunaCivataWeb.Models;
+using Microsoft.AspNetCore.Http;
+using System.IO;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace TunaCivataWeb.Controllers
+{
+    public class AdminController : Controller
+    {
+        private readonly AppDbContext _context;
+
+        public AdminController(AppDbContext context)
+        {
+            _context = context;
+        }
+
+        // Admin yetki kontrolü yardımcısı
+        private bool IsAdmin() => HttpContext.Session.GetString("IsAdmin") == "true";
+
+        // --- GİRİŞ İŞLEMLERİ ---
+        [HttpGet]
+        public IActionResult Login()
+        {
+            if (IsAdmin()) return RedirectToAction("Index");
+            
+            Random rnd = new Random();
+            int sayi1 = rnd.Next(1, 15);
+            int sayi2 = rnd.Next(1, 15);
+            HttpContext.Session.SetInt32("GuvenlikSonucu", sayi1 + sayi2);
+            ViewBag.Soru = $"{sayi1} + {sayi2} = ?";
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Login(string email, string password, int securityAnswer)
+        {
+            int? dogruSonuc = HttpContext.Session.GetInt32("GuvenlikSonucu");
+            if (securityAnswer != dogruSonuc)
+            {
+                ViewBag.Error = "Güvenlik sorusu hatalı!";
+                return Login();
+            }
+
+            // İlk kurulumda admin yoksa oluştur
+            var anyAdmin = await _context.AdminUsers.AnyAsync();
+            if (!anyAdmin)
+            {
+                var newAdmin = new AdminUser { Email = "info@tunacivata.com", Password = "Tuna2026!" };
+                _context.AdminUsers.Add(newAdmin);
+                await _context.SaveChangesAsync();
+            }
+
+            var admin = await _context.AdminUsers.FirstOrDefaultAsync(u => u.Email == email && u.Password == password);
+            if (admin != null)
+            {
+                HttpContext.Session.SetString("IsAdmin", "true");
+                return RedirectToAction("Index");
+            }
+
+            ViewBag.Error = "E-posta veya şifre hatalı!";
+            return Login(); 
+        }
+
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Clear();
+            return RedirectToAction("Login");
+        }
+
+        // --- ANA PANEL (Index) ---
+        public async Task<IActionResult> Index()
+        {
+            if (!IsAdmin()) return RedirectToAction("Login");
+
+            // Kategori Listesini ve Mesajları ViewBag ile gönderiyoruz
+            ViewBag.Categories = await _context.Categories.ToListAsync();
+            ViewBag.Messages = await _context.ContactMessages.OrderByDescending(x => x.CreatedDate).ToListAsync();
+            
+            // Ürünler listesini ana Model olarak gönderiyoruz
+            var urunler = await _context.Products.OrderByDescending(x => x.Id).ToListAsync();
+            return View(urunler);
+        }
+
+// --- KATEGORİ İŞLEMLERİ (GÖRSEL DESTEKLİ) ---
+
+[HttpPost]
+public async Task<IActionResult> AddCategory(string categoryName, IFormFile imageFile)
+{
+    if (!IsAdmin()) return Unauthorized();
+
+    if (!string.IsNullOrEmpty(categoryName))
+    {
+        var category = new Category { Name = categoryName };
+
+        // 1. Görsel Seçilmiş mi Kontrol Et
+        if (imageFile != null && imageFile.Length > 0)
+        {
+            // Benzersiz isim oluştur
+            string fileName = Guid.NewGuid().ToString() + Path.GetExtension(imageFile.FileName);
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/img/categories", fileName);
+
+            // Dosyayı sunucuya kaydet
+            using (var stream = new FileStream(path, FileMode.Create))
+            {
+                await imageFile.CopyToAsync(stream);
+            }
+            // Veritabanına kaydedilecek yol
+            category.ImagePath = "/img/categories/" + fileName;
+        }
+
+        _context.Categories.Add(category);
+        await _context.SaveChangesAsync();
+    }
+    return RedirectToAction("Index");
+}
+
+[HttpPost]
+public async Task<IActionResult> EditCategory(int id, string newName, IFormFile imageFile)
+{
+    if (!IsAdmin()) return Unauthorized();
+
+    var category = await _context.Categories.FindAsync(id);
+    if (category != null && !string.IsNullOrEmpty(newName))
+    {
+        category.Name = newName;
+
+        // 2. Yeni Görsel Yüklenmiş mi?
+        if (imageFile != null && imageFile.Length > 0)
+        {
+            // Varsa ESKİ görseli klasörden sil (çöp dosya birikmemesi için)
+            if (!string.IsNullOrEmpty(category.ImagePath))
+            {
+                var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", category.ImagePath.TrimStart('/'));
+                if (System.IO.File.Exists(oldPath)) System.IO.File.Delete(oldPath);
+            }
+
+            // YENİ görseli kaydet
+            string fileName = Guid.NewGuid().ToString() + Path.GetExtension(imageFile.FileName);
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/img/categories", fileName);
+
+            using (var stream = new FileStream(path, FileMode.Create))
+            {
+                await imageFile.CopyToAsync(stream);
+            }
+            category.ImagePath = "/img/categories/" + fileName;
+        }
+
+        await _context.SaveChangesAsync();
+    }
+    return RedirectToAction("Index");
+}
+
+[HttpGet]
+public async Task<IActionResult> DeleteCategory(int id)
+{
+    if (!IsAdmin()) return Unauthorized();
+
+    var cat = await _context.Categories.FindAsync(id);
+    if (cat != null)
+    {
+        // 3. Kategori silinirken görseli de klasörden sil
+        if (!string.IsNullOrEmpty(cat.ImagePath))
+        {
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", cat.ImagePath.TrimStart('/'));
+            if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
+        }
+
+        _context.Categories.Remove(cat);
+        await _context.SaveChangesAsync();
+    }
+    return RedirectToAction("Index");
+}
+
+        // --- MESAJ SİLME ---
+        public async Task<IActionResult> DeleteMessage(int id)
+        {
+            if (!IsAdmin()) return Unauthorized();
+
+            var msg = await _context.ContactMessages.FindAsync(id);
+            if (msg != null)
+            {
+                _context.ContactMessages.Remove(msg);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction("Index");
+        }
+
+        // --- ÜRÜN İŞLEMLERİ ---
+
+        [HttpPost]
+        public async Task<IActionResult> AddProduct(Product product)
+        {
+            if (!IsAdmin()) return Unauthorized();
+
+            if (product.ImageFile != null)
+            {
+                product.ImageUrl = await SaveImage(product.ImageFile);
+            }
+            else
+            {
+                product.ImageUrl = "/img/no-image.jpg";
+            }
+
+            _context.Products.Add(product);
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditProduct(Product product)
+        {
+            if (!IsAdmin()) return Unauthorized();
+
+            var existingProduct = await _context.Products.FindAsync(product.Id);
+            if (existingProduct == null) return NotFound();
+
+            existingProduct.Name = product.Name;
+            existingProduct.Category = product.Category;
+            existingProduct.Description = product.Description;
+
+            if (product.ImageFile != null)
+            {
+                DeletePhysicalFile(existingProduct.ImageUrl);
+                existingProduct.ImageUrl = await SaveImage(product.ImageFile);
+            }
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Index");
+        }
+
+        public async Task<IActionResult> DeleteProduct(int id)
+        {
+            if (!IsAdmin()) return Unauthorized();
+
+            var urun = await _context.Products.FindAsync(id);
+            if (urun != null)
+            {
+                DeletePhysicalFile(urun.ImageUrl);
+                _context.Products.Remove(urun);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction("Index");
+        }
+
+        // --- GÜVENLİK AYARLARI ---
+        [HttpPost]
+        public async Task<IActionResult> UpdateSecurity(string newEmail, string newPassword)
+        {
+            if (!IsAdmin()) return Unauthorized();
+
+            var admin = await _context.AdminUsers.FirstOrDefaultAsync();
+            if (admin != null) 
+            { 
+                admin.Email = newEmail; 
+                admin.Password = newPassword; 
+                await _context.SaveChangesAsync(); 
+            }
+            return RedirectToAction("Index");
+        }
+
+        // --- YARDIMCI DOSYA METODLARI ---
+
+        private async Task<string> SaveImage(IFormFile file)
+        {
+            string wwwRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "img");
+            if (!Directory.Exists(wwwRootPath)) Directory.CreateDirectory(wwwRootPath);
+
+            string fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+            string filePath = Path.Combine(wwwRootPath, fileName);
+
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(fileStream);
+            }
+            return "/img/" + fileName;
+        }
+
+        private void DeletePhysicalFile(string imageUrl)
+        {
+            if (!string.IsNullOrEmpty(imageUrl) && imageUrl != "/img/no-image.jpg")
+            {
+                string filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", imageUrl.TrimStart('/'));
+                if (System.IO.File.Exists(filePath))
+                {
+                    System.IO.File.Delete(filePath);
+                }
+            }
+        }
+    }
+}

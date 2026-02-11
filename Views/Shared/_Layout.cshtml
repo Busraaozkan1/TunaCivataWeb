@@ -1,0 +1,43 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"] - TUNA CIVATA</title>
+    <link rel="stylesheet" href="/css/site.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+    <nav id="navbar">
+        <div class="container">
+            <div class="logo">
+                <a href="/Home/Index#hero">
+                    <img src="/img/tuna_logo1.png" alt="TUNA CİVATA Logo" class="nav-logo" style="height: 60px; width: auto; max-height: 80px; display: block;">
+                </a>
+            </div>
+            <ul>
+                @* Sadece müşterilerin görmesi gereken linkler *@
+                <li><a href="/Home/Index#hero" class="nav-link">Anasayfa</a></li>
+                <li><a href="/Home/Index#about" class="nav-link">Hakkımızda</a></li>
+                <li><a href="/Home/Index#sectors" class="nav-link">Sektörlerimiz</a></li>
+                <li><a href="/Home/Index#products" class="nav-link">Ürünlerimiz</a></li>
+                <li><a href="/Home/Index#contact" class="nav-link">İletişim</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main role="main">
+        @RenderBody()
+    </main>
+
+    <footer>
+        <div class="container text-center">
+            <p>© 2026 TUNA CİVATA A.Ş. Tüm Hakları Saklıdır.</p>
+        </div>
+    </footer>
+
+    <script src="/script.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
