@@ -3,8 +3,7 @@ using TunaCivataWeb.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. ADIM: Veritabanı Servisi (SQLite olarak güncellendi)
-// SQL Server yerine UseSqlite kullanıyoruz, böylece "servis başlatılamadı" hatası almazsın.
+// 1. ADIM: Veritabanı Servisi
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -15,13 +14,29 @@ builder.Services.AddSession(options => {
     options.Cookie.IsEssential = true;
 });
 
-// Standart Servisler
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpContextAccessor(); 
 
 var app = builder.Build();
 
-// HTTP Pipeline Yapılandırması
+// --- EKLEDİĞİMİZ KRİTİK KISIM BAŞLANGICI ---
+// Bu kısım, Railway'de tablo yoksa otomatik oluşturur.
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try 
+    {
+        var context = services.GetRequiredService<AppDbContext>();
+        context.Database.EnsureCreated(); // Veritabanı ve tablolar yoksa oluşturur.
+    }
+    catch (Exception ex)
+    {
+        // Hata olursa loglara yazması için (isteğe bağlı)
+        Console.WriteLine("Veritabanı oluşturulurken hata: " + ex.Message);
+    }
+}
+// --- EKLEDİĞİMİZ KRİTİK KISIM BİTİŞİ ---
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -29,13 +44,10 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles(); // ÖNEMLİ: Resimlerin ve CSS'lerin görünmesi için şarttır.
+app.UseStaticFiles(); 
 
 app.UseRouting();
-
-// 3. ADIM: Oturum Yönetimi Aktif (Sıralama Önemli!)
 app.UseSession(); 
-
 app.UseAuthorization();
 
 app.MapControllerRoute(
