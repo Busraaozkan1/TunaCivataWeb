@@ -46,15 +46,10 @@ namespace TunaCivataWeb.Controllers
                 return Login();
             }
 
-            var admin = await _context.AdminUsers.FirstOrDefaultAsync(u => u.Email == email && u.Password == password);
-            if (admin != null)
-            {
-                HttpContext.Session.SetString("IsAdmin", "true");
-                return RedirectToAction("Index");
-            }
-
-            ViewBag.Error = "E-posta veya şifre hatalı!";
-            return Login(); 
+            // --- GEÇİCİ GÜNCELLEME: Şifre kontrolü devre dışı bırakıldı ---
+            // Bu kısım senin içeri girip şifreni panelden düzeltmen için geçici olarak eklendi.
+            HttpContext.Session.SetString("IsAdmin", "true");
+            return RedirectToAction("Index");
         }
 
         public IActionResult Logout()
